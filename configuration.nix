@@ -79,6 +79,47 @@
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
+  # samba
+
+  services.samba = {
+    enable = true;
+    securityType = "user";
+    openFirewall = true;
+    extraConfig = ''
+    workgroup = WORKGROUP
+    server string = nixos
+    netbios name = nixos
+    guest account = nhambu
+    map to guest = Bad User
+    security = user
+    '';
+    shares = {
+      public = {
+        path = "/mnt/public";
+	comment = "public folder";
+        browseable = "yes";
+        "read only" = "no";
+        "guest ok" = "yes";
+        "create mask" = "0644";
+        "directory mask" = "0755";
+      };
+    };
+  };
+
+  services.samba-wsdd = {
+    enable =  true;
+    openFirewall = true;
+  };
+
+  services.avahi = {
+    publish.enable = true;
+    publish.userServices = true;
+    # ^^ Needed to allow samba to automatically register mDNS records (without the need for an `extraServiceFile`
+    #nssmdns4 = true;
+    # ^^ Not one hundred percent sure if this is needed- if it aint broke, don't fix it
+    enable = true;
+    openFirewall = true;
+  };
   # Enable sound with pipewire.
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -98,6 +139,9 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
+  virtualisation.docker.enable = true;
+  virtualisation.docker.storageDriver = "btrfs";
+  programs.direnv.enable = true;
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.nhambu = {
     isNormalUser = true;
@@ -105,12 +149,12 @@
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
       kdePackages.kate
-      emacs
       discord
       alacritty
       tldr
       erlang
       erlang-ls
+      elixir-ls
       nodejs
       obs-studio
       nerdfonts
@@ -120,16 +164,20 @@
       kdeconnect
       python3
       go
-      uwufetch
+      neofetch
+      gsettings-desktop-schemas
+      docker
     #  thunderbird
     ];
   };
 
+  users.extraGroups.docker.members = ["nhambu"];
   # Install firefox.
   programs.firefox.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
+
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -165,6 +213,7 @@
 	awesome
 	nitrogen
 	picom
+	samba
 	dmenu
   ];
 
